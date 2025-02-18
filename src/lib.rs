@@ -1,21 +1,47 @@
-use jni::JNIEnv;
-use jni::objects::JClass;
+use std::collections::HashMap;
+use std::sync::Mutex;
+use lazy_static::lazy_static;
+use jni::objects::{JString, JObject};
 use jni::sys::jstring;
-use ndarray::Array2;
+use jni::JNIEnv;
 
+
+// Global database using a Mutex
+lazy_static! {
+    static ref TENSOR_DB: Mutex<HashMap<String, String>> = Mutex::new(HashMap::new());
+}
+
+// Function to store tensor data
 #[no_mangle]
-pub extern "system" fn Java_com_meet_tensordb_TensorDB_processTensor(
-    env: JNIEnv,
-    _class: JClass,
+pub extern "system" fn Java_com_meet_tensordb_TensorDB_store(
+    mut env: JNIEnv,
+    _class: JObject,
+    key: JString,
+    data: JString,
+) {
+    let key: String = env.get_string(&key).expect("Invalid key").into();
+    let data: String = env.get_string(&data).expect("Invalid tensor data").into();
+
+    let mut db = TENSOR_DB.lock().unwrap();
+    db.insert(key, data);
+}
+
+// Function to retrieve tensor data
+#[no_mangle]
+pub extern "system" fn Java_com_meet_tensordb_TensorDB_get(
+    mut env: JNIEnv,
+    _class: JObject,
+    key: JString,
 ) -> jstring {
-    let tensor: Array2<f32> = Array2::from_shape_vec((2, 2), vec![1.0, 2.0, 3.0, 4.0])
-        .expect("Tensor creation failed.");
+    let key: String = env.get_string(&key).expect("Invalid key").into();
+    
+    let db = TENSOR_DB.lock().unwrap();
+    let result_str: String = match db.get(&key) {
+        Some(tensor) => tensor.clone(), // Move result_str out of inner scope
+        None => "null".to_string(),
+    };
 
-    let result = tensor.dot(&tensor); // Matrix multiplication
-    let result_str = format!("Processed Tensor:\n{}", result);
-
-    let java_str = env.new_string(result_str)
-        .expect("Failed to create Java String");
-
-    java_str.as_raw() // Corrected: Use `as_raw()` instead of `into_inner()`
+    env.new_string(result_str)
+        .expect("Failed to create Java string")
+        .into_raw()
 }
