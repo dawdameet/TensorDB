@@ -1,11 +1,11 @@
 use std::vec;
 
-use jni::JNIEnv;
-use jni::objects::JClass;
+// use jni::JNIEnv;
+// use jni::objects::JClass;
 use jni::sys::jint;
-use ndarray::{Array2,Axis};
+use ndarray::{Array2};
 #[no_mangle]
-pub extern "system" fn processTensor(){
+pub extern "system" fn processTensor()->jint{
     println!("Processing Tensors...");
     let mat: Array2<f32>=Array2::from_shape_vec((2,2), vec![1.0,2.0,3.0])
             .expect("Tensor process failed.");

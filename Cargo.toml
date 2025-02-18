@@ -4,5 +4,6 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+jni = "0.21.1"
 ndarray = "0.15.3"
 tch = "0.4.0"
