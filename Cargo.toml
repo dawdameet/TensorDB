@@ -7,3 +7,7 @@ edition = "2021"
 jni = "0.21.1"
 ndarray = "0.15.3"
 tch = "0.4.0"
+
+[lib]
+name="tensorlib"
+crate-type = ["cdylib"]
