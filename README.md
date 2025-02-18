@@ -5,13 +5,13 @@ TensorDB-Java is a Java wrapper for the TensorDB Rust library using JNI (Java Na
 ## Project Structure
 
 ```
-├── tensordb               # Rust library (TensorDB)
+├── tensordb               # Rust library (TensorDB) ----X you are here
 │   ├── src                # Rust source code
 │   │   ├── lib.rs         # Rust implementation for tensor operations
 │   ├── target/release     # Compiled Rust library (DLL/.rlib/.d files)
 │   └── Cargo.toml         # Rust project configuration
 │
-├── tensordb-java          # Java wrapper ----X you are here
+├── tensordb-java          # Java wrapper 
 │   ├── src/main/java/com/meet/tensordb
 │   │   ├── TensorDB.java  # Java class interacting with Rust
 │   ├── target             # Compiled Java classes
