@@ -1,4 +1,4 @@
-# TensorDB-Java
+# TensorDB
 
 TensorDB-Java is a Java wrapper for the TensorDB Rust library using JNI (Java Native Interface). It enables Java applications to interact with Rust-based tensor processing functions.
 
