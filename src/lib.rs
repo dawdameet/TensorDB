@@ -17,7 +17,7 @@ pub extern "system" fn Java_com_meet_tensordb_TensorDB_store(
 ) -> jint {
     let key = match env.get_string(&key) {
         Ok(k) => k.to_string_lossy().into_owned(),
-        Err(_) => return -1, // Return error code
+        Err(_) => return -1,
     };
     
     let data = match env.get_string(&data) {
