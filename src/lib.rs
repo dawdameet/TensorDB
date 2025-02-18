@@ -4,14 +4,10 @@ use lazy_static::lazy_static;
 use jni::objects::{JString, JObject};
 use jni::sys::jstring;
 use jni::JNIEnv;
-
-
-// Global database using a Mutex
 lazy_static! {
     static ref TENSOR_DB: Mutex<HashMap<String, String>> = Mutex::new(HashMap::new());
 }
 
-// Function to store tensor data
 #[no_mangle]
 pub extern "system" fn Java_com_meet_tensordb_TensorDB_store(
     mut env: JNIEnv,
@@ -25,8 +21,6 @@ pub extern "system" fn Java_com_meet_tensordb_TensorDB_store(
     let mut db = TENSOR_DB.lock().unwrap();
     db.insert(key, data);
 }
-
-// Function to retrieve tensor data
 #[no_mangle]
 pub extern "system" fn Java_com_meet_tensordb_TensorDB_get(
     mut env: JNIEnv,
