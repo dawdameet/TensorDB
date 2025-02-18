@@ -9,7 +9,7 @@ lazy_static! {
 }
 
 #[no_mangle]
-pub extern "system" fn Java_com_example_TensorDB_store(
+pub extern "system" fn Java_com_meet_tensordb_TensorDB_store(
     mut env: JNIEnv,
     _class: JObject,
     key: JString,
@@ -31,14 +31,14 @@ pub extern "system" fn Java_com_example_TensorDB_store(
 
 
 #[no_mangle]
-pub extern "system" fn Java_com_example_TensorDB_get(
+pub extern "system" fn Java_com_meet_tensordb_TensorDB_get(
     mut env: JNIEnv,
     _class: JObject,
     key: JString,
 ) -> jstring {
     let key = match env.get_string(&key) {
         Ok(k) => k.to_string_lossy().into_owned(),
-        Err(_) => return std::ptr::null_mut(), // Return null if key is invalid
+        Err(_) => return std::ptr::null_mut(),
     };
     
     let result = TENSOR_DB.get(&*key).map(|entry| entry.value().clone());
