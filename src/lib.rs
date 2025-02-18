@@ -1,41 +1,50 @@
-use std::collections::HashMap;
-use std::sync::Mutex;
+use dashmap::DashMap;
 use lazy_static::lazy_static;
 use jni::objects::{JString, JObject};
-use jni::sys::jstring;
+use jni::sys::{jstring, jint};
 use jni::JNIEnv;
+
 lazy_static! {
-    static ref TENSOR_DB: Mutex<HashMap<String, String>> = Mutex::new(HashMap::new());
+    static ref TENSOR_DB: DashMap<String, String> = DashMap::new();
 }
 
 #[no_mangle]
-pub extern "system" fn Java_com_meet_tensordb_TensorDB_store(
+pub extern "system" fn Java_com_example_TensorDB_store(
     mut env: JNIEnv,
     _class: JObject,
     key: JString,
     data: JString,
-) {
-    let key: String = env.get_string(&key).expect("Invalid key").into();
-    let data: String = env.get_string(&data).expect("Invalid tensor data").into();
-
-    let mut db = TENSOR_DB.lock().unwrap();
-    db.insert(key, data);
+) -> jint {
+    let key = match env.get_string(&key) {
+        Ok(k) => k.to_string_lossy().into_owned(),
+        Err(_) => return -1, // Return error code
+    };
+    
+    let data = match env.get_string(&data) {
+        Ok(d) => d.to_string_lossy().into_owned(),
+        Err(_) => return -1,
+    };
+    
+    TENSOR_DB.insert(key, data);
+    0 
 }
+
+
 #[no_mangle]
-pub extern "system" fn Java_com_meet_tensordb_TensorDB_get(
+pub extern "system" fn Java_com_example_TensorDB_get(
     mut env: JNIEnv,
     _class: JObject,
     key: JString,
 ) -> jstring {
-    let key: String = env.get_string(&key).expect("Invalid key").into();
-    
-    let db = TENSOR_DB.lock().unwrap();
-    let result_str: String = match db.get(&key) {
-        Some(tensor) => tensor.clone(), // Move result_str out of inner scope
-        None => "null".to_string(),
+    let key = match env.get_string(&key) {
+        Ok(k) => k.to_string_lossy().into_owned(),
+        Err(_) => return std::ptr::null_mut(), // Return null if key is invalid
     };
-
-    env.new_string(result_str)
-        .expect("Failed to create Java string")
-        .into_raw()
+    
+    let result = TENSOR_DB.get(&*key).map(|entry| entry.value().clone());
+    
+    match result {
+        Some(value) => env.new_string(value).expect("Failed to create Java string").into_raw(),
+        None => std::ptr::null_mut(),
+    }
 }
