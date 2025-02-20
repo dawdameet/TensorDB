@@ -1,11 +1,19 @@
-use dashmap::DashMap;
-use lazy_static::lazy_static;
+use rocksdb::{DB, Options};
 use jni::objects::{JString, JObject};
 use jni::sys::{jstring, jint};
 use jni::JNIEnv;
+use std::sync::Mutex;
+use lazy_static::lazy_static;
 
 lazy_static! {
-    static ref TENSOR_DB: DashMap<String, String> = DashMap::new();
+    static ref DB_INSTANCE: Mutex<DB> = Mutex::new(init_db());
+}
+
+// Initialize RocksDB
+fn init_db() -> DB {
+    let mut opts = Options::default();
+    opts.create_if_missing(true);
+    DB::open(&opts, "./tensordb").expect("Failed to open database")
 }
 
 #[no_mangle]
@@ -19,16 +27,18 @@ pub extern "system" fn Java_com_meet_tensordb_TensorDB_store(
         Ok(k) => k.to_string_lossy().into_owned(),
         Err(_) => return -1,
     };
-    
+
     let data = match env.get_string(&data) {
         Ok(d) => d.to_string_lossy().into_owned(),
         Err(_) => return -1,
     };
-    
-    TENSOR_DB.insert(key, data);
-    0 
-}
 
+    let db = DB_INSTANCE.lock().unwrap();
+    match db.put(key, data) {
+        Ok(_) => 0,
+        Err(_) => -1,
+    }
+}
 
 #[no_mangle]
 pub extern "system" fn Java_com_meet_tensordb_TensorDB_get(
@@ -40,11 +50,15 @@ pub extern "system" fn Java_com_meet_tensordb_TensorDB_get(
         Ok(k) => k.to_string_lossy().into_owned(),
         Err(_) => return std::ptr::null_mut(),
     };
-    
-    let result = TENSOR_DB.get(&*key).map(|entry| entry.value().clone());
-    
+
+    let db = DB_INSTANCE.lock().unwrap();
+    let result = db.get(key).ok().flatten();
+
     match result {
-        Some(value) => env.new_string(value).expect("Failed to create Java string").into_raw(),
+        Some(value) => {
+            let value_str = String::from_utf8(value).expect("Invalid UTF-8 data");
+            env.new_string(value_str).expect("Failed to create Java string").into_raw()
+        }
         None => std::ptr::null_mut(),
     }
 }
